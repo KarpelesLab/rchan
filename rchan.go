@@ -9,7 +9,7 @@ import (
 
 var (
 	rchanNextId uint64
-	rchanMap    = make(map[Id]chan any)
+	rchanMap    = make(map[Id]chan<- any)
 	rchanMapLk  sync.RWMutex
 )
 
