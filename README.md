@@ -36,8 +36,9 @@ Note that the sending side should always have a timeout in order to avoid
 deadlocks from a race condition happening between the time when read times
 out and the channel is released. Go's `chan` structure provides no good way
 to deal with this, as for example closing the channel will cause writes to
-panic without providing a way to check for exceptions.
+panic without providing a way to avoid this with a success check such as with
+reads.
 
 This could be avoided by using a more complex structure but the goal of this
 library is to provide the lightest possible way to use go channels. This race
-condition case is unlikely enough so that a timeout will most likely work.
+condition case is unlikely enough so that a timeout will be good enough.
