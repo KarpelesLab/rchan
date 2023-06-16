@@ -1,8 +1,10 @@
 package rchan
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 var (
@@ -41,7 +43,10 @@ func (r Id) Release() {
 	rchanMapLk.Lock()
 	defer rchanMapLk.Unlock()
 
-	delete(rchanMap, r)
+	if v, ok := rchanMap[r]; ok {
+		delete(rchanMap, r)
+		close(v)
+	}
 }
 
 // C will return the channel associated with a rchan object, or nil, and can be used
@@ -58,4 +63,39 @@ func (r Id) C() chan<- any {
 		return c
 	}
 	return nil
+}
+
+// Send will send the given value in the given channel unless the context expires first
+func (r *Id) Send(ctx context.Context, v any) error {
+	c := r.C()
+	if c == nil {
+		return ErrChanClosed
+	}
+
+	select {
+	case c <- v:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// SendTimeout will perform a send that will expire after a given time, using a timer
+// rather than contexts in order to limit weight
+func (r *Id) SendTimeout(max time.Duration, v any) error {
+	c := r.C()
+	if c == nil {
+		return ErrChanClosed
+	}
+
+	t := time.NewTimer(max)
+	defer t.Stop()
+
+	select {
+	case c <- v:
+		return nil
+	case <-t.C:
+		// we use the error from context despite not using a context for consistency, and definitely not because I was too lazy to add another error to errors.go
+		return context.DeadlineExceeded
+	}
 }
