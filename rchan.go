@@ -43,10 +43,7 @@ func (r Id) Release() {
 	rchanMapLk.Lock()
 	defer rchanMapLk.Unlock()
 
-	if v, ok := rchanMap[r]; ok {
-		delete(rchanMap, r)
-		close(v)
-	}
+	delete(rchanMap, r)
 }
 
 // C will return the channel associated with a rchan object, or nil, and can be used
