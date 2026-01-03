@@ -1,3 +1,13 @@
+// Package rchan provides response channels, a simple mechanism to obtain a uint64
+// identifier for a channel that can be used to receive a later response.
+//
+// This is useful for async RPC/IPC patterns where requests are sent to a peer
+// and responses arrive through a different channel. The Id can be transmitted
+// alongside the request, and the responder uses it to route the response back
+// to the correct waiting goroutine.
+//
+// Only the send side of channels is retained internally. The caller receives
+// the receive-only channel from New and is responsible for reading from it.
 package rchan
 
 import (
@@ -13,6 +23,9 @@ var (
 	rchanMapLk  sync.RWMutex
 )
 
+// Id is a unique identifier for a response channel. It can be converted to/from
+// uint64 for transmission over the wire. An Id of 0 is reserved and indicates
+// "no response expected", so New will never return 0.
 type Id uint64
 
 // New creates a new rchan and returns the associated chan to read from to obtain the delayed response.
